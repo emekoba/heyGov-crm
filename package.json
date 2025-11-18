@@ -1,0 +1,25 @@
+{
+	"name": "heygov-crm",
+	"version": "1.0.0",
+	"description": "Mini CRM with AI assistant for HeyGov assessment",
+	"type": "module",
+	"scripts": {
+		"server": "node server/index.js",
+		"client": "vite",
+		"dev": "concurrently \"npm run server\" \"npm run client\""
+	},
+	"dependencies": {
+		"cors": "^2.8.5",
+		"dotenv": "^16.6.1",
+		"express": "^4.18.2",
+		"fuse.js": "^7.1.0",
+		"openai": "^4.104.0",
+		"tiktoken": "^1.0.22",
+		"vue": "^3.3.4"
+	},
+	"devDependencies": {
+		"@vitejs/plugin-vue": "^4.4.0",
+		"concurrently": "^8.2.2",
+		"vite": "^4.5.0"
+	}
+}
