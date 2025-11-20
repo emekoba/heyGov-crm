@@ -42,7 +42,11 @@ export async function parseAssistantQuery(query: string, contacts: any[]) {
 	};
 }
 
-export async function executeAction(parsedAction: any, contacts: any[], nextId: number) {
+export async function executeAction(
+	parsedAction: any,
+	contacts: any[],
+	nextId: number
+) {
 	const { type, params } = parsedAction;
 
 	switch (type) {
@@ -70,9 +74,12 @@ export async function executeAction(parsedAction: any, contacts: any[], nextId: 
 
 			if (existingContact) {
 				if (name !== null && name !== undefined) existingContact.name = name;
-				if (email !== null && email !== undefined) existingContact.email = email;
-				if (company !== null && company !== undefined) existingContact.company = company;
-				if (phone !== null && phone !== undefined) existingContact.phone = phone;
+				if (email !== null && email !== undefined)
+					existingContact.email = email;
+				if (company !== null && company !== undefined)
+					existingContact.company = company;
+				if (phone !== null && phone !== undefined)
+					existingContact.phone = phone;
 
 				return {
 					success: true,

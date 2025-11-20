@@ -25,9 +25,11 @@ export const ACTIONS = {
 };
 
 export const PROMPTS = {
-	actionRouter: (query: string) => `Parse query to JSON action.\n\nActions:\n1. add_or_update: Add/update contact info. Params: {identifier, name, email, company, phone}. Set field to null if not mentioned.\n2. delete_contact: Remove contact. Params: {identifier}.\n3. query_contacts: Answer question. Params: {question}.\n\nQuery: "${query}"\n\nExtract FULL names with initials. Return JSON: {"action":"name","params":{...}}`,
+	actionRouter: (query: string) =>
+		`Parse query to JSON action.\n\nActions:\n1. add_or_update: Add/update contact info. Params: {identifier, name, email, company, phone}. Set field to null if not mentioned.\n2. delete_contact: Remove contact. Params: {identifier}.\n3. query_contacts: Answer question. Params: {question}.\n\nQuery: "${query}"\n\nExtract FULL names with initials. Return JSON: {"action":"name","params":{...}}`,
 
-	query: (query: string, context: string) => `Answer briefly based on these contacts:\n${context}\n\nQuestion: "${query}"`,
+	query: (query: string, context: string) =>
+		`Answer briefly based on these contacts:\n${context}\n\nQuestion: "${query}"`,
 };
 
 export const STOP_WORDS = [

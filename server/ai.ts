@@ -38,7 +38,8 @@ export async function parseAction(userQuery: string) {
 			{
 				Type: "Action Parsing",
 				Model: AI_CONFIG.model,
-				Query: userQuery.substring(0, 50) + (userQuery.length > 50 ? "..." : ""),
+				Query:
+					userQuery.substring(0, 50) + (userQuery.length > 50 ? "..." : ""),
 				"Prompt Tokens": promptTokens,
 				"Completion Tokens": completionTokens,
 				"Total Tokens": totalTokens,
@@ -95,16 +96,19 @@ function filterRelevantContacts(contacts: any[], query: string) {
 		.slice(0, AI_CONFIG.maxContactsForContext)
 		.map((item) => item.contact);
 
-	return relevant.length > 0 ? relevant : contacts.slice(0, AI_CONFIG.maxContactsForContext);
+	return relevant.length > 0
+		? relevant
+		: contacts.slice(0, AI_CONFIG.maxContactsForContext);
 }
 
 export async function answerQuery(query: string, contacts: any[]) {
 	const relevantContacts = filterRelevantContacts(contacts, query);
 	const contactsContext = relevantContacts
 		.map(
-			(c) => `${c.name} (${c.email}) - ${c.company || "No company"} - Added: ${new Date(
-				c.createdAt
-			).toLocaleDateString()}`
+			(c) =>
+				`${c.name} (${c.email}) - ${
+					c.company || "No company"
+				} - Added: ${new Date(c.createdAt).toLocaleDateString()}`
 		)
 		.join("\n");
 
