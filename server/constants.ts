@@ -22,11 +22,11 @@ export const AI_CONFIG = {
 };
 
 // Action types for the AI assistant
-export const ACTIONS = {
-	ADD_OR_UPDATE: "add_or_update",
-	DELETE_CONTACT: "delete_contact",
-	QUERY_CONTACTS: "query_contacts",
-};
+export enum ACTIONS {
+	ADD_OR_UPDATE = "add_or_update",
+	DELETE_CONTACT = "delete_contact",
+	QUERY_CONTACTS = "query_contacts",
+}
 
 // Prompt templates for OpenAI
 export const PROMPTS = {
