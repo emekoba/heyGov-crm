@@ -10,9 +10,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// In-memory contact storage
 let contacts: any[] = [];
 let nextId = CONFIG.initialId;
 
+/**
+ * GET /api/contacts - Returns all contacts or filtered by search
+ */
 app.get("/api/contacts", (req, res) => {
 	const { search } = req.query as any;
 
@@ -20,6 +24,7 @@ app.get("/api/contacts", (req, res) => {
 		return res.json(contacts);
 	}
 
+	// Filter contacts by search term
 	const searchLower = String(search).toLowerCase();
 	const filtered = contacts.filter(
 		(contact) =>
@@ -32,6 +37,9 @@ app.get("/api/contacts", (req, res) => {
 	res.json(filtered);
 });
 
+/**
+ * POST /api/contacts - Creates a new contact
+ */
 app.post("/api/contacts", (req, res) => {
 	const { name, email, company, phone, notes } = req.body as any;
 
@@ -53,6 +61,9 @@ app.post("/api/contacts", (req, res) => {
 	res.status(201).json(contact);
 });
 
+/**
+ * PUT /api/contacts/:id - Updates an existing contact
+ */
 app.put("/api/contacts/:id", (req, res) => {
 	const id = parseInt(req.params.id);
 	const contactIndex = contacts.findIndex((c) => c.id === id);
@@ -79,6 +90,9 @@ app.put("/api/contacts/:id", (req, res) => {
 	res.json(contacts[contactIndex]);
 });
 
+/**
+ * DELETE /api/contacts/:id - Deletes a contact
+ */
 app.delete("/api/contacts/:id", (req, res) => {
 	const id = parseInt(req.params.id);
 	const contactIndex = contacts.findIndex((c) => c.id === id);
@@ -91,6 +105,9 @@ app.delete("/api/contacts/:id", (req, res) => {
 	res.status(204).send();
 });
 
+/**
+ * POST /api/assistant - Processes natural language queries with AI
+ */
 app.post("/api/assistant", async (req, res) => {
 	const { query } = req.body as any;
 
@@ -102,11 +119,13 @@ app.post("/api/assistant", async (req, res) => {
 		const parsedAction = await parseAssistantQuery(query, contacts);
 		const result = await executeAction(parsedAction, contacts, nextId);
 
+		// Handle add action
 		if (result.action === "add" && result.contact) {
 			contacts.push(result.contact);
 			nextId++;
 		}
 
+		// Handle update action
 		if (result.action === "update" && result.contact) {
 			const index = contacts.findIndex((c) => c.id === result.contact.id);
 			if (index !== -1) {
@@ -114,6 +133,7 @@ app.post("/api/assistant", async (req, res) => {
 			}
 		}
 
+		// Handle delete action
 		if (result.action === "delete" && result.contactId) {
 			const index = contacts.findIndex((c) => c.id === result.contactId);
 			if (index !== -1) {

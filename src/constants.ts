@@ -12,6 +12,7 @@ export const ERROR_MESSAGES = {
 	deleteConfirm: "Delete this contact?",
 };
 
+// Default values for add contact form
 export const EMPTY_FORM = {
 	name: "",
 	email: "",
@@ -19,6 +20,7 @@ export const EMPTY_FORM = {
 	phone: "",
 };
 
+// Default values for edit contact form
 export const EMPTY_EDIT_FORM = {
 	id: null,
 	name: "",

@@ -11,17 +11,24 @@ const client = new OpenAI({
 
 const encoding = encoding_for_model("gpt-4o-mini");
 
+/**
+ * Counts tokens in a text string
+ */
 function countTokens(text: string) {
 	const tokens = encoding.encode(text);
 	return tokens.length;
 }
 
+/**
+ * Parses user query to determine action and parameters
+ */
 export async function parseAction(userQuery: string) {
 	const prompt = PROMPTS.actionRouter(userQuery);
 	const promptTokens = countTokens(prompt);
 	const startTime = Date.now();
 
 	try {
+		// Call OpenAI to parse the action
 		const response = await client.chat.completions.create({
 			model: AI_CONFIG.model,
 			messages: [{ role: "user", content: prompt }],
@@ -38,6 +45,7 @@ export async function parseAction(userQuery: string) {
 		const totalTokens = promptTokens + completionTokens;
 		const duration = Date.now() - startTime;
 
+		// Log token usage metrics
 		console.table([
 			{
 				Type: "Action Parsing",
@@ -53,6 +61,7 @@ export async function parseAction(userQuery: string) {
 			},
 		]);
 
+		// Extract JSON from response
 		const jsonMatch = text.match(/\{[\s\S]*\}/);
 		if (jsonMatch) {
 			return JSON.parse(jsonMatch[0]);
@@ -65,11 +74,17 @@ export async function parseAction(userQuery: string) {
 	}
 }
 
+/**
+ * Extracts meaningful keywords from query by filtering stop words
+ */
 function extractKeywordsFromQuery(query: string) {
 	const words = query.toLowerCase().match(/\b[a-z]+\b/g) || [];
 	return words.filter((w: string) => !STOP_WORDS.includes(w) && w.length > 1);
 }
 
+/**
+ * Filters contacts to only include those relevant to the query
+ */
 function filterRelevantContacts(contacts: any[], query: string) {
 	const keywords = extractKeywordsFromQuery(query);
 
@@ -77,6 +92,7 @@ function filterRelevantContacts(contacts: any[], query: string) {
 		return contacts.slice(0, AI_CONFIG.maxContactsForContext);
 	}
 
+	// Score contacts based on keyword matches
 	const scored = contacts.map((contact) => {
 		let score = 0;
 		const searchFields = [
@@ -105,7 +121,11 @@ function filterRelevantContacts(contacts: any[], query: string) {
 		: contacts.slice(0, AI_CONFIG.maxContactsForContext);
 }
 
+/**
+ * Answers a question about contacts using OpenAI
+ */
 export async function answerQuery(query: string, contacts: any[]) {
+	// Filter to relevant contacts only
 	const relevantContacts = filterRelevantContacts(contacts, query);
 	const contactsContext = relevantContacts
 		.map(

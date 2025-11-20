@@ -1,8 +1,10 @@
+// Server configuration
 export const CONFIG = {
 	port: Number(process.env.PORT) || 4001,
 	initialId: 1,
 };
 
+// Error messages for API responses
 export const ERROR_MESSAGES = {
 	requiredField: "Either name or email is required",
 	contactNotFound: "Contact not found",
@@ -11,6 +13,7 @@ export const ERROR_MESSAGES = {
 	noNamesOrEmails: "I couldn't find any names or emails in your message.",
 };
 
+// OpenAI configuration
 export const AI_CONFIG = {
 	model: "gpt-4o-mini",
 	queryTemperature: 0.7,
@@ -18,20 +21,25 @@ export const AI_CONFIG = {
 	maxContactsForContext: 20,
 };
 
+// Action types for the AI assistant
 export const ACTIONS = {
 	ADD_OR_UPDATE: "add_or_update",
 	DELETE_CONTACT: "delete_contact",
 	QUERY_CONTACTS: "query_contacts",
 };
 
+// Prompt templates for OpenAI
 export const PROMPTS = {
+	// Parses user input to determine action type
 	actionRouter: (query: string) =>
 		`Parse query to JSON action.\n\nActions:\n1. add_or_update: Add/update contact info. Params: {identifier, name, email, company, phone}. Set field to null if not mentioned.\n2. delete_contact: Remove contact. Params: {identifier}.\n3. query_contacts: Answer question. Params: {question}.\n\nQuery: "${query}"\n\nExtract FULL names with initials. Return JSON: {"action":"name","params":{...}}`,
 
+	// Answers questions about contacts
 	query: (query: string, context: string) =>
 		`Answer briefly based on these contacts:\n${context}\n\nQuestion: "${query}"`,
 };
 
+// Common words to filter out when extracting keywords
 export const STOP_WORDS = [
 	"when",
 	"did",

@@ -2,6 +2,9 @@ import Fuse from "fuse.js";
 import { answerQuery, parseAction } from "./ai.js";
 import { ACTIONS, ERROR_MESSAGES } from "./constants.js";
 
+/**
+ * Finds a contact by name or email using fuzzy matching
+ */
 function findContact(contacts: any[], identifier: string) {
 	const search = identifier.toLowerCase();
 
@@ -12,7 +15,7 @@ function findContact(contacts: any[], identifier: string) {
 
 	if (match) return match;
 
-	// Use fuzzy search for better matching
+	// Fall back to fuzzy search for typos/partial matches
 	const fuse = new Fuse(contacts, {
 		keys: ["name", "email"],
 		threshold: 0.4,
@@ -24,6 +27,9 @@ function findContact(contacts: any[], identifier: string) {
 	return results.length > 0 ? results[0].item : null;
 }
 
+/**
+ * Parses user query and prepares it for execution
+ */
 export async function parseAssistantQuery(query: string, contacts: any[]) {
 	const parsedAction = await parseAction(query);
 
@@ -42,6 +48,9 @@ export async function parseAssistantQuery(query: string, contacts: any[]) {
 	};
 }
 
+/**
+ * Executes the parsed action (add/update/delete/query)
+ */
 export async function executeAction(
 	parsedAction: any,
 	contacts: any[],
@@ -72,6 +81,7 @@ export async function executeAction(
 			const searchTerm = identifier || name || email;
 			const existingContact = findContact(contacts, searchTerm);
 
+			// Update existing contact
 			if (existingContact) {
 				if (name !== null && name !== undefined) existingContact.name = name;
 				if (email !== null && email !== undefined)
@@ -88,6 +98,7 @@ export async function executeAction(
 					message: `Updated ${existingContact.name || existingContact.email}`,
 				};
 			} else {
+				// Create new contact
 				const newContact = {
 					id: nextId,
 					name: name || "",
