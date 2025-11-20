@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 let contacts: any[] = [];
-let nextId = CONFIG.initialId as number;
+let nextId = CONFIG.initialId;
 
 app.get("/api/contacts", (req, res) => {
 	const { search } = req.query as any;

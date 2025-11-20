@@ -23,13 +23,17 @@ export async function parseAction(userQuery: string) {
 
 	try {
 		const response = await client.chat.completions.create({
-			model: (AI_CONFIG as any).model,
+			model: AI_CONFIG.model,
 			messages: [{ role: "user", content: prompt }],
 			temperature: 0.3,
 			max_tokens: 200,
 		});
 
-		const text = response.choices[0].message.content.trim();
+		const text = response.choices[0]?.message?.content?.trim();
+		if (!text) {
+			console.error("AI returned empty response");
+			return null;
+		}
 		const completionTokens = countTokens(text);
 		const totalTokens = promptTokens + completionTokens;
 		const duration = Date.now() - startTime;
@@ -123,7 +127,11 @@ export async function answerQuery(query: string, contacts: any[]) {
 			max_tokens: AI_CONFIG.queryMaxTokens,
 		});
 
-		const answer = response.choices[0].message.content.trim();
+		const answer = response.choices[0]?.message?.content?.trim();
+		if (!answer) {
+			console.error("AI returned empty answer");
+			return "I couldn't process that query.";
+		}
 		const completionTokens = countTokens(answer);
 		const totalTokens = promptTokens + completionTokens;
 

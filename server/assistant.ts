@@ -20,12 +20,12 @@ function findContact(contacts: any[], identifier: string) {
 		findAllMatches: false,
 	});
 
-	const results = fuse.search(identifier as any);
+	const results = fuse.search(identifier);
 	return results.length > 0 ? results[0].item : null;
 }
 
 export async function parseAssistantQuery(query: string, contacts: any[]) {
-	const parsedAction = await parseAction(query as any);
+	const parsedAction = await parseAction(query);
 
 	if (!parsedAction) {
 		return {

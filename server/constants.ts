@@ -1,5 +1,5 @@
 export const CONFIG = {
-	port: process.env.PORT || 4001,
+	port: Number(process.env.PORT) || 4001,
 	initialId: 1,
 };
 
