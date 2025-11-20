@@ -3,17 +3,17 @@
     <div v-if="loading" class="loading-overlay">
       <div class="spinner"></div>
     </div>
-    
+
     <h1>HeyGov CRM</h1>
 
     <div class="section">
       <h2>🤖Assistant</h2>
       <div class="assistant-input">
-        <input 
+        <input
           ref="assistantInput"
-          v-model="assistantQuery" 
+          v-model="assistantQuery"
           @keyup.enter="handleAssistant"
-          @focus="$event.target.select()"
+          @focus="onAssistantFocus"
           placeholder='Try: "Had a call with Alex Smith, follow up at alex@heygov.com"'
         />
         <button @click="handleAssistant" :disabled="loading">→</button>
@@ -37,10 +37,10 @@
 
     <div class="section">
       <h2>Contacts list</h2>
-      
+
       <div class="filters">
-        <input 
-          v-model="searchQuery" 
+        <input
+          v-model="searchQuery"
           class="search-box"
           placeholder="Search contacts..."
         />
@@ -77,15 +77,15 @@
       </div>
 
       <div v-if="totalPages > 1" class="pagination">
-        <button 
-          @click="currentPage = 1" 
+        <button
+          @click="currentPage = 1"
           :disabled="currentPage === 1"
           class="page-btn"
         >
           First
         </button>
-        <button 
-          @click="currentPage--" 
+        <button
+          @click="currentPage--"
           :disabled="currentPage === 1"
           class="page-btn"
         >
@@ -94,15 +94,15 @@
         <span class="page-info">
           Page {{ currentPage }} of {{ totalPages }} ({{ filteredContacts.length }} contacts)
         </span>
-        <button 
-          @click="currentPage++" 
+        <button
+          @click="currentPage++"
           :disabled="currentPage === totalPages"
           class="page-btn"
         >
           Next
         </button>
-        <button 
-          @click="currentPage = totalPages" 
+        <button
+          @click="currentPage = totalPages"
           :disabled="currentPage === totalPages"
           class="page-btn"
         >
@@ -130,206 +130,200 @@
   </div>
 </template>
 
-<script>
-import { API_ENDPOINTS, EMPTY_EDIT_FORM, EMPTY_FORM, ERROR_MESSAGES, UI_CONFIG } from './constants.js';
+<script setup lang="ts">
+import { computed, nextTick, onMounted, ref } from 'vue'
+import { API_ENDPOINTS, EMPTY_EDIT_FORM, EMPTY_FORM, ERROR_MESSAGES, UI_CONFIG } from './constants'
 
-export default {
-  data() {
-    return {
-      contacts: [],
-      searchQuery: '',
-      filterCompany: '',
-      sortBy: 'name',
-      currentPage: 1,
-      itemsPerPage: UI_CONFIG.itemsPerPage,
-      assistantQuery: '',
-      assistantResponse: '',
-      form: { ...EMPTY_FORM },
-      formError: '',
-      showEditModal: false,
-      editForm: { ...EMPTY_EDIT_FORM },
-      editError: '',
-      loading: false
+const assistantInput = ref<HTMLInputElement | null>(null)
+const contacts = ref<any[]>([])
+const searchQuery = ref('')
+const filterCompany = ref('')
+const sortBy = ref('name')
+const currentPage = ref(1)
+const itemsPerPage = UI_CONFIG.itemsPerPage
+const assistantQuery = ref('')
+const assistantResponse = ref('')
+const form = ref({ ...EMPTY_FORM })
+const formError = ref('')
+const showEditModal = ref(false)
+const editForm = ref({ ...EMPTY_EDIT_FORM })
+const editError = ref('')
+const loading = ref(false)
+
+const companies = computed(() => {
+  const set = new Set<string>()
+  contacts.value.forEach(contact => {
+    if (contact.company) set.add(contact.company)
+  })
+  return Array.from(set).sort()
+})
+
+const filteredContacts = computed(() => {
+  let result = contacts.value.slice()
+
+  if (searchQuery.value) {
+    const q = searchQuery.value.toLowerCase()
+    result = result.filter(contact =>
+      contact.name?.toLowerCase().includes(q) ||
+      contact.email?.toLowerCase().includes(q) ||
+      contact.company?.toLowerCase().includes(q) ||
+      contact.phone?.toLowerCase().includes(q)
+    )
+  }
+
+  if (filterCompany.value) {
+    result = result.filter(contact => contact.company === filterCompany.value)
+  }
+
+  result.sort((a, b) => {
+    const aVal = a[sortBy.value] || ''
+    const bVal = b[sortBy.value] || ''
+    return String(aVal).localeCompare(String(bVal))
+  })
+
+  return result
+})
+
+const totalPages = computed(() => Math.ceil(filteredContacts.value.length / itemsPerPage))
+
+const paginatedContacts = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredContacts.value.slice(start, end)
+})
+
+onMounted(() => {
+  loadContacts()
+})
+
+async function loadContacts() {
+  const res = await fetch(API_ENDPOINTS.contacts)
+  contacts.value = await res.json()
+}
+
+async function addContact() {
+  formError.value = ''
+  if (!form.value.name && !form.value.email) {
+    formError.value = ERROR_MESSAGES.requiredField
+    return
+  }
+
+  loading.value = true
+  try {
+    const res = await fetch(API_ENDPOINTS.contacts, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form.value)
+    })
+
+    if (res.ok) {
+      const newContact = await res.json()
+      contacts.value.push(newContact)
+      form.value = { ...EMPTY_FORM }
     }
-  },
-  computed: {
-    companies() {
-      const companySet = new Set();
-      this.contacts.forEach(contact => {
-        if (contact.company) companySet.add(contact.company);
-      });
-      return Array.from(companySet).sort();
-    },
-    filteredContacts() {
-      let result = [...this.contacts];
-      
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        result = result.filter(contact =>
-          contact.name?.toLowerCase().includes(query) ||
-          contact.email?.toLowerCase().includes(query) ||
-          contact.company?.toLowerCase().includes(query) ||
-          contact.phone?.toLowerCase().includes(query)
-        );
-      }
-      
-      if (this.filterCompany) {
-        result = result.filter(contact => contact.company === this.filterCompany);
-      }
-      
-      result.sort((a, b) => {
-        const aVal = a[this.sortBy] || '';
-        const bVal = b[this.sortBy] || '';
-        return aVal.toString().localeCompare(bVal.toString());
-      });
-      
-      return result;
-    },
-    totalPages() {
-      return Math.ceil(this.filteredContacts.length / this.itemsPerPage);
-    },
-    paginatedContacts() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.filteredContacts.slice(start, end);
-    }
-  },
-  watch: {
-    filteredContacts() {
-      if (this.currentPage > this.totalPages && this.totalPages > 0) {
-        this.currentPage = this.totalPages;
-      }
-    }
-  },
-  mounted() {
-    this.loadContacts();
-  },
-  methods: {
-    async loadContacts() {
-      const response = await fetch(API_ENDPOINTS.contacts);
-      this.contacts = await response.json();
-    },
-    async addContact() {
-      this.formError = '';
-      
-      if (!this.form.name && !this.form.email) {
-        this.formError = ERROR_MESSAGES.requiredField;
-        return;
+  } finally {
+    loading.value = false
+  }
+}
+
+async function handleAssistant() {
+  if (!assistantQuery.value.trim()) return
+
+  loading.value = true
+  try {
+    const res = await fetch(API_ENDPOINTS.assistant, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: assistantQuery.value })
+    })
+
+    if (!res.ok) throw new Error(`Server error: ${res.status}`)
+
+    const result = await res.json()
+    assistantResponse.value = result.message
+
+    if (result.success) {
+      if (result.action === 'add' && result.contact) {
+        contacts.value.push(result.contact)
       }
 
-      this.loading = true;
-      try {
-        const response = await fetch(API_ENDPOINTS.contacts, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.form)
-        });
-
-        if (response.ok) {
-          const newContact = await response.json();
-          this.contacts.push(newContact);
-          this.form = { ...EMPTY_FORM };
-        }
-      } finally {
-        this.loading = false;
-      }
-    },
-    async handleAssistant() {
-      if (!this.assistantQuery.trim()) return;
-
-      this.loading = true;
-      try {
-        const response = await fetch(API_ENDPOINTS.assistant, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: this.assistantQuery })
-        });
-
-        if (!response.ok) {
-          throw new Error(`Server error: ${response.status}`);
-        }
-
-        const result = await response.json();
-        this.assistantResponse = result.message;
-        
-        if (result.success) {
-          if (result.action === 'add' && result.contact) {
-            this.contacts.push(result.contact);
-          }
-          
-          if (result.action === 'update' && result.contact) {
-            const index = this.contacts.findIndex(c => c.id === result.contact.id);
-            if (index !== -1) {
-              this.contacts.splice(index, 1, result.contact);
-            }
-          }
-          
-          if (result.action === 'delete' && result.contactId) {
-            this.contacts = this.contacts.filter(c => c.id !== result.contactId);
-          }
-        }
-        
-        this.$nextTick(() => {
-          if (this.$refs.assistantInput) {
-            this.$refs.assistantInput.select();
-          }
-        });
-      } catch (error) {
-        console.error('Assistant error:', error);
-        this.assistantResponse = 'Something went wrong. Please try again.';
-      } finally {
-        this.loading = false;
-      }
-    },
-    openEditModal(contact) {
-      this.editForm = { ...contact };
-      this.showEditModal = true;
-      this.editError = '';
-    },
-    closeEditModal() {
-      this.showEditModal = false;
-      this.editForm = { ...EMPTY_EDIT_FORM };
-      this.editError = '';
-    },
-    async updateContact() {
-      this.editError = '';
-      
-      if (!this.editForm.name && !this.editForm.email) {
-        this.editError = ERROR_MESSAGES.requiredField;
-        return;
+      if (result.action === 'update' && result.contact) {
+        const idx = contacts.value.findIndex(c => c.id === result.contact.id)
+        if (idx !== -1) contacts.value.splice(idx, 1, result.contact)
       }
 
-      this.loading = true;
-      try {
-        const response = await fetch(`${API_ENDPOINTS.contacts}/${this.editForm.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(this.editForm)
-        });
-
-        if (response.ok) {
-          const updated = await response.json();
-          const index = this.contacts.findIndex(c => c.id === updated.id);
-          if (index !== -1) {
-            this.contacts.splice(index, 1, updated);
-          }
-          this.closeEditModal();
-        }
-      } finally {
-        this.loading = false;
-      }
-    },
-    async deleteContact(id) {
-      if (!confirm(ERROR_MESSAGES.deleteConfirm)) return;
-
-      this.loading = true;
-      try {
-        await fetch(`${API_ENDPOINTS.contacts}/${id}`, { method: 'DELETE' });
-        this.contacts = this.contacts.filter(c => c.id !== id);
-      } finally {
-        this.loading = false;
+      if (result.action === 'delete' && result.contactId) {
+        contacts.value = contacts.value.filter(c => c.id !== result.contactId)
       }
     }
+
+    await nextTick()
+    assistantInput.value?.select()
+  } catch (err) {
+    console.error('Assistant error:', err)
+    assistantResponse.value = 'Something went wrong. Please try again.'
+  } finally {
+    loading.value = false
+  }
+}
+
+function onAssistantFocus(e: FocusEvent) {
+  const el = e.target as HTMLInputElement | null
+  el?.select()
+}
+
+function openEditModal(contact: any) {
+  editForm.value = { ...contact }
+  showEditModal.value = true
+  editError.value = ''
+}
+
+function closeEditModal() {
+  showEditModal.value = false
+  editForm.value = { ...EMPTY_EDIT_FORM }
+  editError.value = ''
+}
+
+async function updateContact() {
+  editError.value = ''
+  if (!editForm.value.name && !editForm.value.email) {
+    editError.value = ERROR_MESSAGES.requiredField
+    return
+  }
+
+  loading.value = true
+  try {
+    const res = await fetch(`${API_ENDPOINTS.contacts}/${editForm.value.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editForm.value)
+    })
+
+    if (res.ok) {
+      const updated = await res.json()
+      const idx = contacts.value.findIndex(c => c.id === updated.id)
+      if (idx !== -1) contacts.value.splice(idx, 1, updated)
+      closeEditModal()
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+async function deleteContact(id: number) {
+  if (!confirm(ERROR_MESSAGES.deleteConfirm)) return
+
+  loading.value = true
+  try {
+    await fetch(`${API_ENDPOINTS.contacts}/${id}`, { method: 'DELETE' })
+    contacts.value = contacts.value.filter(c => c.id !== id)
+  } finally {
+    loading.value = false
   }
 }
 </script>
+
+<style>
+/* keep existing styles */
+</style>
+
