@@ -4,11 +4,11 @@
 	"description": "Mini CRM with AI assistant for HeyGov assessment",
 	"type": "module",
 	"scripts": {
-		"server": "node server/index.js",
-		"server:ts": "tsx server/index.ts",
+		"server": "tsx server/index.ts",
 		"client": "vite",
 		"dev": "concurrently \"npm run server\" \"npm run client\"",
-		"dev:ts": "concurrently \"npm run server:ts\" \"npm run client\""
+		"build": "vite build",
+		"preview": "vite preview"
 	},
 	"dependencies": {
 		"cors": "^2.8.5",
