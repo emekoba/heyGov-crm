@@ -242,18 +242,35 @@ async function handleAssistant() {
     const result = await res.json()
     assistantResponse.value = result.message
 
+    // Update local state with new/updated contacts
     if (result.success) {
-      if (result.action === 'add' && result.contact) {
-        contacts.value.push(result.contact)
+      // Handle multiple results (multiple contacts added)
+      if (result.results) {
+        for (const r of result.results) {
+          if (r.action === 'add' && r.contact) {
+            contacts.value.push(r.contact)
+          }
+          if (r.action === 'update' && r.contact) {
+            const idx = contacts.value.findIndex(c => c.id === r.contact.id)
+            if (idx !== -1) contacts.value.splice(idx, 1, r.contact)
+          }
+          if (r.action === 'delete' && r.contactId) {
+            contacts.value = contacts.value.filter(c => c.id !== r.contactId)
+          }
+        }
       }
-
-      if (result.action === 'update' && result.contact) {
-        const idx = contacts.value.findIndex(c => c.id === result.contact.id)
-        if (idx !== -1) contacts.value.splice(idx, 1, result.contact)
-      }
-
-      if (result.action === 'delete' && result.contactId) {
-        contacts.value = contacts.value.filter(c => c.id !== result.contactId)
+      // Handle single result
+      else {
+        if (result.action === 'add' && result.contact) {
+          contacts.value.push(result.contact)
+        }
+        if (result.action === 'update' && result.contact) {
+          const idx = contacts.value.findIndex(c => c.id === result.contact.id)
+          if (idx !== -1) contacts.value.splice(idx, 1, result.contact)
+        }
+        if (result.action === 'delete' && result.contactId) {
+          contacts.value = contacts.value.filter(c => c.id !== result.contactId)
+        }
       }
     }
 

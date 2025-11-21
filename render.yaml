@@ -1,0 +1,30 @@
+services:
+  # Backend API
+  - type: web
+    name: heygov-crm-api
+    runtime: node
+    env: node
+    buildCommand: npm install
+    startCommand: npm run server
+    envVars:
+      - key: PORT
+        value: 4001
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false
+    healthCheckPath: /api/contacts
+
+  # Frontend Static Site
+  - type: web
+    name: heygov-crm-frontend
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://heygov-crm-api.onrender.com/api/*
+      - type: rewrite
+        source: /*
+        destination: /index.html

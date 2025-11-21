@@ -116,32 +116,54 @@ app.post("/api/assistant", async (req, res) => {
 	}
 
 	try {
-		const parsedAction = await parseAssistantQuery(query, contacts);
-		const result = await executeAction(parsedAction, contacts, nextId);
-
-		// Handle add action
-		if (result.action === "add" && result.contact) {
-			contacts.push(result.contact);
-			nextId++;
+		const parsedActions = await parseAssistantQuery(query, contacts);
+		
+		// Handle error case
+		if (parsedActions.type === "error") {
+			return res.json(parsedActions);
 		}
+		
+		// Execute all actions
+		const results = [];
+		for (const parsedAction of parsedActions) {
+			const result = await executeAction(parsedAction, contacts, nextId);
 
-		// Handle update action
-		if (result.action === "update" && result.contact) {
-			const index = contacts.findIndex((c) => c.id === result.contact.id);
-			if (index !== -1) {
-				contacts[index] = result.contact;
+			// Handle add action
+			if (result.action === "add" && result.contact) {
+				contacts.push(result.contact);
+				nextId++;
 			}
-		}
 
-		// Handle delete action
-		if (result.action === "delete" && result.contactId) {
-			const index = contacts.findIndex((c) => c.id === result.contactId);
-			if (index !== -1) {
-				contacts.splice(index, 1);
+			// Handle update action
+			if (result.action === "update" && result.contact) {
+				const index = contacts.findIndex((c) => c.id === result.contact.id);
+				if (index !== -1) {
+					contacts[index] = result.contact;
+				}
 			}
+
+			// Handle delete action
+			if (result.action === "delete" && result.contactId) {
+				const index = contacts.findIndex((c) => c.id === result.contactId);
+				if (index !== -1) {
+					contacts.splice(index, 1);
+				}
+			}
+			
+			results.push(result);
 		}
 
-		res.json(result);
+		// Return combined message for multiple actions
+		if (results.length > 1) {
+			const messages = results.map(r => r.message).filter(Boolean);
+			res.json({
+				success: true,
+				message: messages.join(". "),
+				results
+			});
+		} else {
+			res.json(results[0]);
+		}
 	} catch (error) {
 		console.error("Assistant error:", error);
 		res.status(500).json({

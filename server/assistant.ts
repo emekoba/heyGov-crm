@@ -31,21 +31,23 @@ function findContact(contacts: any[], identifier: string) {
  * Parses user query and prepares it for execution
  */
 export async function parseAssistantQuery(query: string, contacts: any[]) {
-	const parsedAction = await parseAction(query);
+	const parsedActions = await parseAction(query);
 
-	if (!parsedAction) {
+	if (!parsedActions || parsedActions.length === 0) {
+		console.error("Invalid parsed action:", parsedActions);
 		return {
 			type: "error",
 			message: "I couldn't understand that request.",
 		};
 	}
 
-	return {
-		type: parsedAction.action,
-		params: parsedAction.params,
+	// Return array of actions to execute
+	return parsedActions.map((action: any) => ({
+		type: action.action.toLowerCase(),
+		params: action.params,
 		query,
 		contacts,
-	};
+	}));
 }
 
 /**

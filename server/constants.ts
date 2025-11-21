@@ -32,7 +32,7 @@ export enum ACTIONS {
 export const PROMPTS = {
 	// Parses user input to determine action type
 	actionRouter: (query: string) =>
-		`Parse query to JSON action.\n\nActions:\n1. add_or_update: Add/update contact info. Params: {identifier, name, email, company, phone}. Set field to null if not mentioned.\n2. delete_contact: Remove contact. Params: {identifier}.\n3. query_contacts: Answer question. Params: {question}.\n\nQuery: "${query}"\n\nExtract FULL names with initials. Return JSON: {"action":"name","params":{...}}`,
+		`Parse query to JSON actions array.\n\nActions:\n1. add_or_update: Add/update contact info OR when user mentions meeting/talking/emailing/interacting with people (even without contact details). Params: {identifier, name, email, company, phone}. Set field to null if not mentioned. ALWAYS use this for "met with", "talked to", "called", "emailed", etc.\n2. delete_contact: Remove contact. Params: {identifier}.\n3. query_contacts: Only for questions about existing contacts (what, when, who, etc).\n\nQuery: "${query}"\n\nIMPORTANT: Only extract information EXPLICITLY mentioned. DO NOT invent last names, emails, or other details. Use ONLY what's provided. For MULTIPLE people, return MULTIPLE actions.\nRETURN JSON ARRAY: [{"action":"add_or_update","params":{"identifier":null,"name":"Jon","email":null,"company":null,"phone":null}}, ...]`,
 
 	// Answers questions about contacts
 	query: (query: string, context: string) =>

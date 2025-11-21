@@ -1,6 +1,10 @@
+const API_BASE_URL = import.meta.env.PROD 
+	? "https://heygov-crm.onrender.com"
+	: "";
+
 export const API_ENDPOINTS = {
-	contacts: "/api/contacts",
-	assistant: "/api/assistant",
+	contacts: `${API_BASE_URL}/api/contacts`,
+	assistant: `${API_BASE_URL}/api/assistant`,
 };
 
 export const UI_CONFIG = {

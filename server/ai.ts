@@ -61,12 +61,65 @@ export async function parseAction(userQuery: string) {
 			},
 		]);
 
-		// Extract JSON from response
-		const jsonMatch = text.match(/\{[\s\S]*\}/);
-		if (jsonMatch) {
-			return JSON.parse(jsonMatch[0]);
+		// Extract JSON from response - handle both arrays and single objects
+		let parsed;
+		try {
+			// Try to find array first
+			const arrayMatch = text.match(/\[[\s\S]*\]/);
+			if (arrayMatch) {
+				parsed = JSON.parse(arrayMatch[0]);
+			} else {
+				// Fall back to single object
+				const objectMatch = text.match(/\{[^{}]*\}/);
+				if (objectMatch) {
+					parsed = JSON.parse(objectMatch[0]);
+					// If response is missing 'action' field, infer it from the params
+					if (!parsed.action && (parsed.name || parsed.email)) {
+						console.log("AI returned params without action, inferring add_or_update");
+						parsed = {
+							action: "add_or_update",
+							params: parsed
+						};
+					}
+					// Wrap single action in array
+					parsed = [parsed];
+				} else {
+					console.error("No valid JSON found in AI response:", text);
+					return null;
+				}
+			}
+			
+			// Normalize array items - infer action if missing
+			parsed = parsed.map((item: any) => {
+				if (!item.action && (item.name || item.email)) {
+					return {
+						action: "add_or_update",
+						params: item
+					};
+				}
+				if (!item.action && item.identifier && !item.name && !item.email) {
+					return {
+						action: "delete_contact",
+						params: item
+					};
+				}
+				if (!item.action && item.question) {
+					return {
+						action: "query_contacts",
+						params: item
+					};
+				}
+				return item;
+			});
+			
+			return parsed;
+		} catch (e) {
+			console.error("Failed to parse AI response:", text);
+			console.error("Parse error:", e);
+			return null;
 		}
 
+		console.error("No valid JSON found in AI response:", text);
 		return null;
 	} catch (error) {
 		console.error("AI action parsing error:", error);

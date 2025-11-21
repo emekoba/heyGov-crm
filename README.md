@@ -124,8 +124,39 @@ This starts:
 
 ## Technical Details
 
-- **Frontend**: Vue.js 3 (Composition API), Vite
-- **Backend**: Express.js, Node.js
+- **Frontend**: Vue.js 3 (Composition API), Vite, TypeScript
+- **Backend**: Express.js, Node.js, TypeScript
 - **AI**: OpenAI GPT-4o-mini
 - **Storage**: In-memory (resets on restart)
 - **Port Configuration**: Frontend 4000, Backend 4001
+
+## Deployment
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for comprehensive deployment instructions.
+
+### Quick Deploy Options
+
+**For Assessors - Easiest Option:**
+1. Backend: Deploy to [Render](https://render.com) (free tier)
+2. Frontend: Deploy to [Netlify](https://netlify.com) or [Vercel](https://vercel.com)
+3. See `DEPLOYMENT.md` for step-by-step guide
+
+**One-Click Deploy:**
+- [![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/emekoba/heyGov-crm)
+- Backend requires separate deployment (see DEPLOYMENT.md)
+
+### Local Testing
+```bash
+# Clone and install
+git clone https://github.com/emekoba/heyGov-crm.git
+cd heyGov-crm
+npm install
+
+# Configure environment
+echo "OPENAI_API_KEY=your_key_here" > .env
+
+# Run application
+npm run dev
+```
+
+Visit http://localhost:4000 to test the application.
